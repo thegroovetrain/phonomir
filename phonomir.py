@@ -11,7 +11,10 @@ import re
 import sys
 
 import cmudict
+from g2p_en import G2p
 import pronouncing
+
+_g2p = G2p()
 
 # ---------------------------------------------------------------------------
 # Swap table: ARPAbet → ARPAbet (reciprocal pairs)
@@ -84,15 +87,19 @@ IPA = {
 }
 
 
-def decompose_er(phones):
-    """Replace ER tokens with AH + R, preserving stress on AH."""
+def decompose_composites(phones):
+    """Replace ER with its components AH + R before swapping.
+
+    ER (/ɝ/) is a composite of schwa + r, both of which have explicit
+    chart pairs (/ə/↔/ʌ/ and /r/↔/l/). Stress is preserved on AH.
+    Other phonemes with no chart pair (HH, NG, OY) pass through unchanged.
+    """
     result = []
     for p in phones:
         base = p.rstrip("012")
-        stress = p[len(base):]
+        stress = p[len(base):] or "0"
         if base == "ER":
-            # ER0 → AH0 R, ER1 → AH1 R, etc.
-            result.append("AH" + (stress or "0"))
+            result.append("AH" + stress)
             result.append("R")
         else:
             result.append(p)
@@ -270,18 +277,10 @@ def get_phones(word):
     if result:
         return result
 
-    # Last resort: try g2p_en if available
-    try:
-        from g2p_en import G2p
-        _g2p = G2p()
-        phones = _g2p(word)
-        result = [p.strip() for p in phones if p.strip() and p.strip() not in (" ", "'")]
-        if result:
-            return result
-    except ImportError:
-        pass
-
-    return None
+    # Last resort: g2p_en neural model — handles any word
+    phones = _g2p(cleaned or word)
+    result = [p.strip() for p in phones if p.strip() and p not in (" ", "'")]
+    return result or None
 
 
 _reverse_index = None
@@ -320,7 +319,7 @@ def mirror_word(word):
         return None
 
     # Decompose ER into AH + R
-    phones = decompose_er(phones)
+    phones = decompose_composites(phones)
 
     # Swap each phoneme
     swapped = [swap_phoneme(p) for p in phones]
