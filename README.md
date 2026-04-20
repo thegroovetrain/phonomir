@@ -47,9 +47,13 @@ If no command is given, `translate` is assumed.
 $ python phonomir.py translate "hello world"
 rertheh howthsh
 
-# Decipher
+# Decipher (cache lookup — exact round-trip)
 $ python phonomir.py reverse "rertheh howthsh"
 hello world
+
+# Decipher without cache — best phonemic guess
+$ python phonomir.py reverse "rertheh howthsh" --no-cache
+hull word
 
 # Show phoneme breakdown
 $ python phonomir.py phonemize "hello"
