@@ -49,7 +49,7 @@ rertheh howthsh
 
 # Decipher
 $ python phonomir.py reverse "rertheh howthsh"
-Hello world
+hello world
 
 # Show phoneme breakdown
 $ python phonomir.py phonemize "hello"

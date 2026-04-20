@@ -190,14 +190,15 @@ def tokenize(text):
 
 
 def match_caps(original, transformed):
-    """Preserve the capitalization pattern of the original word."""
+    """Apply the capitalization pattern of original to transformed."""
     if not transformed:
         return transformed
+    t = transformed.lower()
     if original.isupper() and len(original) > 1:
-        return transformed.upper()
+        return t.upper()
     if original[0].isupper():
-        return transformed[0].upper() + transformed[1:]
-    return transformed
+        return t[0].upper() + t[1:]
+    return t
 
 
 # ---------------------------------------------------------------------------
