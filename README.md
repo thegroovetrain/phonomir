@@ -16,20 +16,20 @@ pip install -r requirements.txt
 python phonomir.py [command] [text]
 ```
 
-If no command is given, `mirror` is assumed.
+If no command is given, `translate` is assumed.
 
 ### Commands
 
 | Command | Description |
 |---------|-------------|
-| `mirror` | Forward translation: English → phonemes → swap → respelled output |
-| `reverse` | Reverse translation: deciphers mirror output back to English |
+| `translate` | Forward translation: English → phonemes → swap → respelled output |
+| `reverse` | Reverse translation: deciphers translated output back to English |
 | `phonemize` | Show the phoneme breakdown for an English word or phrase |
 | `spell` | Convert a phoneme string back to its best English spelling |
 | `swap` | Apply the rule table directly to a phoneme stream |
 | `cache` | Inspect or edit the translation dictionary |
 
-### Options (mirror / reverse)
+### Options (translate / reverse)
 
 | Flag | Description |
 |------|-------------|
@@ -38,25 +38,28 @@ If no command is given, `mirror` is assumed.
 | `--no-cache` | Skip cache read and write |
 | `-i`, `--interactive` | Interactive REPL mode |
 | `-v`, `--verbose` | Show phoneme breakdown alongside output |
-| `-i FILE`, `-o FILE` | Read from / write to a file |
+| `-f FILE`, `-o FILE` | Read from / write to a file |
 
 ### Examples
 
 ```bash
-# Encipher a word
-python phonomir.py mirror "hello world"
+# Encipher a phrase
+$ python phonomir.py translate "hello world"
+rertheh howthsh
 
 # Decipher
-python phonomir.py reverse "ehlaw verl"
+$ python phonomir.py reverse "rertheh howthsh"
+hull word
 
 # Show phoneme breakdown
-python phonomir.py phonemize "hello"
+$ python phonomir.py phonemize "hello"
+HH AH0 L OW1
 
 # Interactive mode
-python phonomir.py mirror -i
+python phonomir.py translate -i
 
-# Scan CMU dictionary for words whose mirrors are also real words
-python phonomir.py mirror --scan-pairs
+# Scan CMU dictionary for words whose translations are also real words
+python phonomir.py translate --scan-pairs
 ```
 
 ### Cache subcommands
@@ -66,7 +69,7 @@ The translation dictionary caches word pairs to speed up repeat lookups and lets
 ```bash
 python phonomir.py cache list
 python phonomir.py cache get hello
-python phonomir.py cache add hello ehlaw
+python phonomir.py cache add hello rertheh
 python phonomir.py cache remove hello
 ```
 

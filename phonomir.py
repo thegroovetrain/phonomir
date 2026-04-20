@@ -687,8 +687,8 @@ def scan_dictionary_pairs(forward_map, words=None):
 # Interactive REPL (forward mirror only)
 # ---------------------------------------------------------------------------
 def repl(forward_map, cache_indexes, cache_path):
-    print("Phonomir \u2014 Phonetic Mirror")
-    print("Type a sentence to mirror it. Use -v prefix for verbose. Ctrl+C to exit.\n")
+    print("Phonomir \u2014 Phonetic Cipher")
+    print("Type a sentence to translate it. Use -v prefix for verbose. Ctrl+C to exit.\n")
     while True:
         try:
             line = input("> ")
@@ -940,19 +940,19 @@ def run_cache(args, parser):
 # ---------------------------------------------------------------------------
 # CLI setup
 # ---------------------------------------------------------------------------
-_KNOWN_SUBCOMMANDS = {"mirror", "reverse", "phonemize", "spell", "swap", "cache"}
+_KNOWN_SUBCOMMANDS = {"translate", "reverse", "phonemize", "spell", "swap", "cache"}
 
 
-def _maybe_inject_mirror(argv):
-    """If the user didn't specify a subcommand, inject 'mirror' so the
-    existing bare `phonomir "text"` UX keeps working. Leave --help alone."""
+def _maybe_inject_translate(argv):
+    """If the user didn't specify a subcommand, inject 'translate' so the
+    bare `phonomir "text"` UX keeps working. Leave --help alone."""
     if not argv:
         return argv
     if argv[0] in ("-h", "--help"):
         return argv
     if argv[0] in _KNOWN_SUBCOMMANDS:
         return argv
-    return ["mirror"] + argv
+    return ["translate"] + argv
 
 
 def _add_io_flags(sp, include_verbose=False):
@@ -971,8 +971,8 @@ def build_parser():
     )
     subparsers = parser.add_subparsers(dest="command")
 
-    # mirror (also the default)
-    p_mir = subparsers.add_parser("mirror",
+    # translate (also the default)
+    p_mir = subparsers.add_parser("translate",
         help="Forward translation: phonemize → swap → respell")
     p_mir.add_argument("text", nargs="?")
     p_mir.add_argument("--rules", default=None,
@@ -984,7 +984,7 @@ def build_parser():
     p_mir.add_argument("-i", "--interactive", action="store_true",
                        help="Interactive REPL mode")
     p_mir.add_argument("-c", "--scan-pairs", action="store_true",
-                       help="Scan CMU dictionary for word pairs whose mirrors "
+                       help="Scan CMU dictionary for word pairs whose translations "
                             "are also real English words")
     _add_io_flags(p_mir, include_verbose=True)
 
@@ -1039,7 +1039,7 @@ def build_parser():
 
 
 def main():
-    argv = _maybe_inject_mirror(sys.argv[1:])
+    argv = _maybe_inject_translate(sys.argv[1:])
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -1048,7 +1048,7 @@ def main():
         return
 
     dispatch = {
-        "mirror": run_mirror,
+        "translate": run_mirror,
         "reverse": run_reverse,
         "phonemize": run_phonemize,
         "spell": run_spell,
