@@ -1,0 +1,52 @@
+# Phonomir rules — draft #2
+# Philosophy: no reciprocal pairs at all. All 24 consonants redistributed into
+# three cycles that alternate manner (stop↔fricative, fric↔liquid, nasal↔affricate),
+# so minimum-feature swaps (voicing pairs, place pairs) are impossible.
+# Vowel cycle unchanged from draft #1 to isolate the effect of breaking stop pairs.
+
+# 12-cycle (stops + obstruent fricatives, alternating stop↔fricative every step)
+P -> V
+V -> T
+T -> Z
+Z -> K
+K -> ZH
+ZH -> B
+B -> S
+S -> D
+D -> SH
+SH -> G
+G -> F
+F -> P
+
+# 7-cycle (remaining fricatives + liquids + glides, alternating manner)
+TH -> L
+L -> DH
+DH -> W
+W -> HH
+HH -> R
+R -> Y
+Y -> TH
+
+# 5-cycle (nasals + affricates, alternating manner)
+M -> CH
+CH -> N
+N -> JH
+JH -> NG
+NG -> M
+
+# Vowels — unchanged from draft #1 (15-cycle).
+IY -> AA
+AA -> EY
+EY -> AE
+AE -> UW
+UW -> AO
+AO -> IH
+IH -> OW
+OW -> EH
+EH -> UH
+UH -> AY
+AY -> OY
+OY -> AH
+AH -> ER
+ER -> AW
+AW -> IY

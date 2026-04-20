@@ -1,0 +1,16 @@
+# Claude files
+CLAUDE.md
+.claude/
+
+# Dictionary/cache files
+*.dict.txt
+
+# Project reference docs
+PHONETIC_MIRROR.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
