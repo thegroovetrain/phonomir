@@ -2,7 +2,7 @@
 
 A phonetic substitution cipher for English text. Words are transformed by mapping each phoneme through a set of cycles based on articulatory features — stops trade with fricatives, nasals with affricates, vowels rotate through a 15-step cycle. The cipher operates on sounds, not spelling.
 
-Applying the forward transform enciphers a word. To decipher, use `reverse` — which runs the inverse map, not the forward transform again.
+Applying the forward transform enciphers a word. To decipher, use `reverse` — which runs the inverse map.
 
 ## Installation
 
@@ -36,7 +36,8 @@ If no command is given, `translate` is assumed.
 | `--rules FILE` | Use a custom rules file (default: `rules/default.txt`) |
 | `--cache FILE` | Use a custom cache file |
 | `--no-cache` | Skip cache read and write |
-| `-i`, `--interactive` | Interactive REPL mode |
+| `-i`, `--interactive` | Interactive REPL mode (`translate` only) |
+| `-s`, `--strip` | Strip `{braces}` from protected segments in output (default: keep) |
 | `-v`, `--verbose` | Show phoneme breakdown alongside output |
 | `-f FILE`, `-o FILE` | Read from / write to a file |
 
@@ -58,6 +59,18 @@ hull word
 # Show phoneme breakdown
 $ python phonomir.py phonemize "hello"
 HH AH0 L OW1
+
+# Protect proper nouns with {braces} — they pass through untouched
+$ python phonomir.py translate "{Had}! The manifestation of {Nuit}."
+{Had}! Wer choojerpuhdzagerj ert {Nuit}.
+
+# Strip braces for clean prose output
+$ python phonomir.py translate -s "{Had}! The manifestation of {Nuit}."
+Had! Wer choojerpuhdzagerj ert Nuit.
+
+# Braces survive the round-trip — reverse recovers the original
+$ python phonomir.py translate "{Had}! The manifestation of {Nuit}." | python phonomir.py reverse
+{Had}! The manifestation of {Nuit}.
 
 # Interactive mode
 python phonomir.py translate -i

@@ -184,9 +184,16 @@ def to_ipa(arpabet):
 # ---------------------------------------------------------------------------
 def tokenize(text):
     """Split text into (token, is_word) tuples. Non-word tokens (punctuation,
-    whitespace) are preserved for round-tripping."""
-    parts = re.findall(r"[A-Za-z']+|[^A-Za-z']+", text)
-    return [(p, bool(re.match(r"[A-Za-z]", p))) for p in parts]
+    whitespace) are preserved for round-tripping. Spans enclosed in {braces}
+    are returned with is_word='skip' and the braces stripped from the token."""
+    parts = re.findall(r"\{[^}]+\}|[A-Za-z']+|[^A-Za-z'{]+|\{|\}", text)
+    result = []
+    for p in parts:
+        if p.startswith("{") and p.endswith("}") and len(p) > 2:
+            result.append((p[1:-1], "skip"))
+        else:
+            result.append((p, bool(re.match(r"[A-Za-z]", p))))
+    return result
 
 
 def match_caps(original, transformed):
@@ -404,11 +411,18 @@ def _suffix_reverse(phones):
     return None
 
 
-def spell(phones):
+def spell(phones, *, conlang=False):
     """Convert phonemes to text via three-tier fallback:
-       CMU reverse index → suffix-reverse → respell."""
+       CMU reverse index → suffix-reverse → respell.
+
+    When conlang=True (forward/cipher direction), skip tiers 1-2 and always
+    use phonetic respelling so output never accidentally looks like English.
+    """
     if not phones:
         return ""
+
+    if conlang:
+        return "".join(respell_phoneme(p) for p in phones)
 
     # Tier 1: direct CMU reverse lookup
     word = cmu_reverse_lookup(phones)
@@ -526,7 +540,7 @@ def mirror_word(word, forward_map):
         return None
 
     swapped = [apply_rules(p, forward_map) for p in phones]
-    output = spell(swapped)
+    output = spell(swapped, conlang=True)
 
     return {
         "original": word,
@@ -537,7 +551,7 @@ def mirror_word(word, forward_map):
 
 
 def mirror_text(text, forward_map, *, verbose=False,
-                cache_indexes=None, cache_path=None):
+                cache_indexes=None, cache_path=None, keep_markers=True):
     """Full forward pipeline: tokenize → per-word (cache|mirror_word) → assemble."""
     forward_index = cache_indexes[0] if cache_indexes else {}
     reverse_index = cache_indexes[1] if cache_indexes else {}
@@ -547,6 +561,12 @@ def mirror_text(text, forward_map, *, verbose=False,
     verbose_lines = []
 
     for token, is_word in tokens:
+        if is_word == "skip":
+            out = f"{{{token}}}" if keep_markers else token
+            output_parts.append(out)
+            if verbose:
+                verbose_lines.append(f"  {token:<16} [protected]")
+            continue
         if not is_word:
             output_parts.append(token)
             continue
@@ -609,7 +629,7 @@ def reverse_word(word, reverse_map):
     return spell(unswapped)
 
 
-def reverse_text(text, reverse_map, *, verbose=False, cache_indexes=None):
+def reverse_text(text, reverse_map, *, verbose=False, cache_indexes=None, keep_markers=True):
     """Full reverse pipeline: tokenize → per-word (cache|reverse_word) → assemble."""
     reverse_index = cache_indexes[1] if cache_indexes else {}
 
@@ -618,6 +638,12 @@ def reverse_text(text, reverse_map, *, verbose=False, cache_indexes=None):
     verbose_lines = []
 
     for token, is_word in tokens:
+        if is_word == "skip":
+            out = f"{{{token}}}" if keep_markers else token
+            output_parts.append(out)
+            if verbose:
+                verbose_lines.append(f"  {token:<16} [protected]")
+            continue
         if not is_word:
             output_parts.append(token)
             continue
@@ -864,7 +890,8 @@ def run_mirror(args, parser):
 
     text, input_path = _resolve_input(args, parser, "text")
     mirrored = mirror_text(text, forward_map, verbose=args.verbose,
-                           cache_indexes=cache_indexes, cache_path=cache_path)
+                           cache_indexes=cache_indexes, cache_path=cache_path,
+                           keep_markers=not args.strip)
     _emit_output(args, mirrored, input_path)
 
 
@@ -880,7 +907,8 @@ def run_reverse(args, parser):
 
     text, input_path = _resolve_input(args, parser, "text")
     result = reverse_text(text, reverse_map, verbose=args.verbose,
-                          cache_indexes=cache_indexes)
+                          cache_indexes=cache_indexes,
+                          keep_markers=not args.strip)
     _emit_output(args, result, input_path)
 
 
@@ -889,7 +917,9 @@ def run_phonemize(args, parser):
     tokens = tokenize(text)
     items = []
     for token, is_word in tokens:
-        if is_word:
+        if is_word == "skip":
+            items.append((f"{{{token}}}", None))
+        elif is_word:
             phones = get_phones(token)
             items.append((token, phones))
         else:
@@ -984,6 +1014,9 @@ def build_parser():
                        help="Skip cache read and write")
     p_mir.add_argument("-i", "--interactive", action="store_true",
                        help="Interactive REPL mode")
+    p_mir.add_argument("-s", "--strip", action="store_true",
+                       help="Remove {braces} from protected segments in output "
+                            "(default: keep for round-trip safety)")
     p_mir.add_argument("-c", "--scan-pairs", action="store_true",
                        help="Scan CMU dictionary for word pairs whose translations "
                             "are also real English words")
@@ -996,6 +1029,8 @@ def build_parser():
     p_rev.add_argument("--rules", default=None)
     p_rev.add_argument("--cache", default=None)
     p_rev.add_argument("--no-cache", action="store_true")
+    p_rev.add_argument("-s", "--strip", action="store_true",
+                       help="Remove {braces} from protected segments in output")
     _add_io_flags(p_rev, include_verbose=True)
 
     # phonemize
